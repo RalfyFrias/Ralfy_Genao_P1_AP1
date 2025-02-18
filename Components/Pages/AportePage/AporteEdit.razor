@@ -1,0 +1,117 @@
+﻿@page "/Aporte/Edit"
+@page "/Aporte/Edit/{AporteId:int}"
+@using Ralfy_Genao_P1_AP1.Models
+@using Ralfy_Genao_P1_AP1.Services
+@inject AporteServices aporteService
+@inject NavigationManager navigationManager
+@using Blazored.Toast.Services
+@inject IToastService toastService
+
+@rendermode InteractiveServer
+
+<EditForm Model="aporte" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="card shadow-lg border-0" style="background-color: white">
+
+        <div class="card-header bg-primary text-center text-white py-2 rounded">
+            <h3 style="font-weight: bold;" class="font-weight-bold">Modificar Aporte</h3>
+        </div>
+
+        <div class="card-body">
+            @*AporteId*@
+            <div class="mb-3">
+                <label for="AporteId" class="form-label">AporteId:</label>
+                <InputNumber @bind-Value="aporte.AporteId" class="form-control" />
+            </div>
+            @*Persona*@
+            <div class="mb-3">
+                <label for="Persona" class="form-label">Persona:</label>
+                <InputText @bind-Value="aporte.Persona" class="form-control" />
+                <ValidationMessage For="@(() => aporte.Persona)" />
+            </div>
+            @*Observación*@ 
+            <div class="mb-3">
+                <label for="Observacion" class="form-label">Observación:</label>
+                <InputText @bind-Value="aporte.Observacion" class="form-control" />
+                <ValidationMessage For="@(() => aporte.Observacion)" />
+            </div>
+            @*Monto*@ 
+            <div class="mb-3">
+                <label for="Monto" class="form-label">Monto:</label>
+                <InputNumber @bind-Value="aporte.Monto" class="form-control" />
+                <ValidationMessage For="@(() => aporte.Monto)" />
+            </div>
+        </div>
+
+        <div class="card-footer d-flex justify-content-lg-center text-center">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus"></span>Nuevo</button>
+                <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span>Guardar</button>
+                <button type="button" class="btn btn-outline-danger" @onclick="Retroceder"><span class="bi bi-arrow-bar-left"></span>Retroceder</button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int AporteId { get; set; }
+    public Aporte aporte { get; set; } = new Aporte();
+    private bool existe = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AporteId != 0)
+        {
+            await Buscar();
+        }
+    }
+
+    public async Task Buscar()
+    {
+        existe = false;
+        var aporteEncontrado = await aporteService.Buscar(AporteId);
+        if (aporteEncontrado != null)
+        {
+            aporte = aporteEncontrado;
+        }
+        else
+        {
+            Nuevo();
+        }
+    }
+
+    public async Task<bool> Validar()
+    {
+        var listaAportes = await aporteService.Listar(a => a.Persona.ToLower() == aporte.Persona.ToLower() && a.AporteId != aporte.AporteId);
+        existe = listaAportes.Any();
+        return !existe;
+    }
+
+    public async Task Nuevo()
+    {
+        aporte = new Aporte();
+        existe = false;
+    }
+
+    public async Task Guardar()
+    {
+        if (!await Validar())
+        {
+            toastService.ShowWarning("Ya existe un aporte con esa persona.");
+            return;
+        }
+
+        var guardado = await aporteService.Guardar(aporte);
+        if (guardado)
+        {
+            toastService.ShowSuccess("Se ha modificado el aporte correctamente.");
+            navigationManager.NavigateTo("/Aporte/Index");
+        }
+    }
+
+    public void Retroceder()
+    {
+        navigationManager.NavigateTo("/Aporte/Index");
+    }
+}

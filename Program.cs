@@ -1,10 +1,20 @@
+using Blazored.Toast;
+using Microsoft.EntityFrameworkCore;
 using Ralfy_Genao_P1_AP1.Components;
+using Ralfy_Genao_P1_AP1.DAL;
+using Ralfy_Genao_P1_AP1.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+var ConStr = builder.Configuration.GetConnectionString("ConStr");
+builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlServer(ConStr));
+
+builder.Services.AddScoped<AporteServices>();
+builder.Services.AddBlazoredToast();
 
 var app = builder.Build();
 
