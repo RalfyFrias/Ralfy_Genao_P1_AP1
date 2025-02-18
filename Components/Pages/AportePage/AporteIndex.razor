@@ -1,0 +1,117 @@
+﻿@page "/Aporte/Index"
+@using Ralfy_Genao_P1_AP1.Models
+@using Ralfy_Genao_P1_AP1.Services
+@inject AporteServices aporteServices
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Consulta de Aportes</PageTitle>
+
+<div class="card-header bg-primary text-center text-white py-2 rounded">
+    <h3 style="font-weight: bold;" class="font-weight-bold">Consulta de Aportes</h3>
+</div>
+
+<div class="row mb-3 align-items-end">
+    <div class="col md-3">
+        <label for="Filtro" class="form-label">Filtrar por:</label>
+        <select @bind="filtro" class="form-select">
+            <option value="ID">AporteId</option>
+            <option value="Persona">Persona</option>
+        </select>
+    </div>
+
+    <div class="col md-6">
+        <label for="ValorFiltro" class="form-label">Búsqueda:</label>
+        <div class="input-group">
+            <input @bind="valorFiltro" class="form-control" placeholder="Buscar" />
+            <button @onclick="Buscar" class="btn btn-outline-primary" type="button">
+                <span class="bi bi-search"></span> Buscar
+            </button>
+        </div>
+    </div>
+
+    <div class="col md-3 text-end">
+        <a href="/Aporte/Create" class="btn btn-success"><span class="bi bi-plus-circle"></span> Crear</a>
+    </div>
+</div>
+
+<table class="table table-bordered text-center">
+    <thead class="border-primary text-white">
+        <tr>
+            <th>AporteId</th>
+            <th>Persona</th>
+            <th>Observación</th>
+            <th>Monto</th>
+            <th>Editar</th>
+            <th>Eliminar</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var aporte in ListaAportes)
+        {
+            <tr>
+                <td>@aporte.AporteId</td>
+                <td>@aporte.Persona</td>
+                <td>@aporte.Observacion</td>
+                <td>@aporte.Monto.ToString("C")</td>
+
+                <td>
+                    <a href="/Aporte/Edit/@aporte.AporteId" class="btn btn-outline-success">
+                        <span class="bi bi-pencil-fill"></span>
+                    </a>
+                </td>
+
+                <td>
+                    <a href="/Aporte/Delete/@aporte.AporteId" class="btn btn-outline-danger">
+                        <span class="bi bi-trash-fill"></span>
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="card-footer text-start">
+    <p><strong>Total de Aportes:</strong> @ListaAportes.Count</p>
+    <p><strong>Total Monto:</strong> @ListaAportes.Sum(a => a.Monto).ToString("C")</p>
+</div>
+
+@code {
+    public Aporte aporte { get; set; } = new Aporte();
+    public List<Aporte> ListaAportes { get; set; } = new List<Aporte>();
+    public string filtro = "ID";
+    public string valorFiltro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarAportes();
+    }
+
+    private async Task CargarAportes()
+    {
+        ListaAportes = await aporteServices.Listar(a => true);
+    }
+
+    public async Task Buscar()
+    {
+        if (string.IsNullOrWhiteSpace(valorFiltro))
+        {
+            await CargarAportes();
+        }
+        else
+        {
+            if (filtro == "ID" && int.TryParse(valorFiltro, out int aporteId))
+            {
+                ListaAportes = await aporteServices.Listar(a => a.AporteId == aporteId);
+            }
+            else if (filtro == "Persona")
+            {
+                ListaAportes = await aporteServices.Listar(a => a.Persona.Contains(valorFiltro));
+            }
+            else if (filtro == "Observacion")
+            {
+                ListaAportes = await aporteServices.Listar(a => a.Observacion.Contains(valorFiltro));
+            }
+        }
+    }
+}

@@ -1,0 +1,96 @@
+﻿@page "/Aporte/Delete/{AporteId:int}"
+@using Ralfy_Genao_P1_AP1.Services
+@using Ralfy_Genao_P1_AP1.Models
+@inject AporteServices aporteService
+@inject NavigationManager navigationManager
+@using Blazored.Toast.Services
+@inject IToastService toastService
+@rendermode InteractiveServer
+
+<PageTitle>Eliminar Aporte</PageTitle>
+
+<div class="container">
+    <div class="card shadow-header">
+        <div class="card-header bg-primary text-white text-center py-2 rounded">
+            <h3><strong>Eliminar Aporte</strong></h3>
+        </div>
+
+        <div class="card-header text-center">
+            <h3 class="text-danger">¿Estás seguro de que quieres eliminar este aporte?</h3>
+        </div>
+
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card shadow-lg">
+                        <div class="card-header">
+                            <h3 class="text-center"><strong>Datos del Aporte</strong></h3>
+                        </div>
+                        <div class="card-body">
+                            @if (aporte != null)
+                            {
+                                <ul class="list-unstyled">
+                                    <li><strong>AporteId:</strong> @aporte.AporteId</li>
+                                    <li><strong>Persona:</strong> @aporte.Persona</li>
+                                    <li><strong>Observación:</strong> @aporte.Observacion</li>
+                                    <li><strong>Monto:</strong> @aporte.Monto</li>
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="text-center text-danger">Aporte no encontrado.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (aporte != null)
+        {
+            <div class="card-footer text-center">
+                <button type="button" class="btn btn-outline-danger" @onclick="EliminarAporte"><i class="bi bi-trash-fill"></i> Eliminar</button>
+                <button type="button" class="btn btn-outline-primary" @onclick="Retroceder"><i class="bi bi-box-arrow-left"></i> Retroceder</button>
+            </div>
+        }
+    </div>
+</div>
+
+@code 
+{
+    [Parameter]
+    public int AporteId { get; set; }
+    public Aporte? aporte { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AporteId > 0)
+        {
+            aporte = await aporteService.Buscar(AporteId);
+        }
+    }
+
+    private async Task EliminarAporte()
+    {
+        if (AporteId == 0 || aporte == null)
+        {
+            return;
+        }
+
+        bool eliminado = await aporteService.Eliminar(AporteId);
+        if (eliminado)
+        {
+            toastService.ShowSuccess("El aporte se ha eliminado correctamente.");
+            Retroceder();
+        }
+        else
+        {
+            toastService.ShowError("Ocurrió un error al intentar eliminar el aporte.");
+        }
+    }
+
+    private void Retroceder()
+    {
+        navigationManager.NavigateTo("/Aporte/Index");
+    }
+}
